@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Word Links — Bostonian Times</title>
+  <style>
+    :root { --ink:#171717; --muted:#6d6a64; --paper:#f7f4ee; --line:#d7d1c5; --accent:#b33b2e; --gold:#e8c875; --cell:min(5.2vw, 42px); }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); background:var(--paper); font-family: Georgia, 'Times New Roman', serif; }
+    button, input, select { font:inherit; }
+    button { cursor:pointer; }
+    .masthead { width:min(1120px, calc(100% - 40px)); margin:0 auto; border-bottom:3px double var(--ink); padding:19px 0 12px; display:flex; justify-content:space-between; align-items:end; gap:20px; }
+    .paper-name { font-size:clamp(20px, 3vw, 31px); font-weight:700; letter-spacing:-.04em; }
+    .date { color:var(--muted); font:11px Arial, sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+    .top-link { border:0; border-bottom:1px solid var(--ink); background:transparent; color:var(--ink); padding:3px 0; font:700 10px Arial, sans-serif; letter-spacing:.14em; text-transform:uppercase; }
+    .top-link:hover { color:var(--accent); border-color:var(--accent); }
+    main { width:min(1120px, calc(100% - 40px)); margin:0 auto; }
+    .screen { min-height:calc(100vh - 78px); display:none; }
+    .screen.active { display:flex; }
+    #home { align-items:center; justify-content:center; text-align:center; padding:40px 0; }
+    .home-card { max-width:650px; }
+    .kicker { font:700 12px Arial, sans-serif; letter-spacing:.2em; text-transform:uppercase; color:var(--accent); }
+    h1 { font-size:clamp(60px, 12vw, 128px); line-height:.85; letter-spacing:-.08em; margin:22px 0 28px; }
+    .dek { color:#4a4740; font-size:clamp(17px, 2vw, 22px); line-height:1.4; max-width:530px; margin:0 auto 34px; }
+    .primary { border:0; background:var(--ink); color:#fffdf7; padding:14px 30px; font:700 13px Arial, sans-serif; letter-spacing:.14em; text-transform:uppercase; transition:transform .15s, background .15s; }
+    .primary:hover { background:var(--accent); transform:translateY(-2px); }
+    #game { padding:24px 0 48px; flex-direction:column; align-items:center; }
+    .game-head { width:100%; display:flex; justify-content:space-between; align-items:start; border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:22px; }
+    .game-head h2 { margin:0; font-size:clamp(28px, 4vw, 44px); letter-spacing:-.04em; }
+    .instructions { color:var(--muted); font-size:14px; margin:7px 0 0; line-height:1.35; }
+    .scorebox { text-align:right; white-space:nowrap; }
+    .score-label { display:block; font:700 10px Arial, sans-serif; letter-spacing:.15em; color:var(--muted); text-transform:uppercase; }
+    .score { font-size:34px; line-height:1; }
+    .game-layout { display:flex; gap:28px; align-items:flex-start; width:100%; justify-content:center; }
+    .board-wrap { flex:0 0 auto; }
+    .board { display:grid; grid-template-columns:repeat(15, var(--cell)); grid-template-rows:repeat(15, var(--cell)); border:2px solid var(--ink); background:#fffdf8; box-shadow:5px 5px 0 rgba(23,23,23,.09); }
+    .cell { width:var(--cell); height:var(--cell); border:0; border-right:1px solid var(--line); border-bottom:1px solid var(--line); background:#fffdf8; padding:0; position:relative; color:var(--ink); font:700 clamp(12px, 2.2vw, 19px) Arial, sans-serif; }
+    .cell:nth-child(15n) { border-right:0; }
+    .cell:nth-last-child(-n+15) { border-bottom:0; }
+    .cell.filled { background:var(--ink); color:#fffdf7; }
+    .cell.start-a { background:var(--accent); color:#fffdf7; }
+    .cell.start-b { background:#355d59; color:#fffdf7; }
+    .cell.added { background:#355d59; color:#fffdf7; }
+    .board.complete .cell.filled { background:var(--gold); color:var(--ink); }
+    .cell.selected { box-shadow:inset 0 0 0 3px var(--gold); background:#fff3c9; }
+    .cell.filled.selected { background:#846d28; }
+    .cell.invalid { animation:shake .25s linear; }
+    @keyframes shake { 25%{transform:translateX(-2px)} 75%{transform:translateX(2px)} }
+    .controls { width:min(320px, 100%); border-top:3px solid var(--ink); padding-top:15px; }
+    .control-title { margin:0 0 13px; font-size:22px; }
+    label { display:block; font:700 10px Arial, sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin:15px 0 6px; }
+    input, select { width:100%; border:1px solid #aaa397; background:#fffdf8; padding:11px 12px; color:var(--ink); outline:none; }
+    input.success { border-color:#355d59; box-shadow:0 0 0 2px rgba(53,93,89,.12); }
+    input.error { border-color:var(--accent); box-shadow:0 0 0 2px rgba(179,59,46,.12); }
+    input:focus, select:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(179,59,46,.12); }
+    .place { width:100%; margin-top:16px; }
+    .status { min-height:44px; border-top:1px solid var(--line); margin-top:18px; padding-top:12px; color:var(--muted); font-size:14px; line-height:1.35; }
+    .status.error { color:var(--accent); }
+    .status.success { color:#355d59; }
+    .archive-panel { display:none; position:fixed; z-index:5; top:74px; right:max(20px, calc((100vw - 1120px) / 2)); width:min(340px, calc(100% - 40px)); background:var(--paper); border:1px solid var(--ink); padding:18px; box-shadow:7px 7px 0 rgba(23,23,23,.15); }
+    .archive-panel.show { display:block; }
+    .archive-panel h4 { margin:0 0 10px; font-size:22px; }
+    .archive-row { display:flex; gap:7px; }
+    .archive-row input { flex:1; min-width:0; padding:8px; }
+    .archive-row button { border:1px solid var(--ink); background:transparent; padding:8px 10px; font:700 10px Arial, sans-serif; letter-spacing:.08em; text-transform:uppercase; }
+    .archive-row button:hover { background:var(--ink); color:#fffdf7; }
+    .archive-status { min-height:18px; margin-top:8px; color:var(--muted); font:11px Arial, sans-serif; }
+    .week-days { display:grid; grid-template-columns:repeat(7, 1fr); gap:3px; margin-top:9px; }
+    .day-button { border:1px solid var(--line); background:#fffdf8; padding:6px 2px; color:var(--muted); font:700 9px Arial, sans-serif; text-transform:uppercase; }
+    .day-button:hover, .day-button.current { border-color:var(--ink); color:var(--ink); }
+    .day-button.done { background:var(--gold); color:var(--ink); }
+    .day-button small { display:block; font-size:9px; margin-top:3px; }
+    .legend { margin-top:20px; color:var(--muted); font:11px Arial, sans-serif; line-height:1.65; }
+    .legend span { display:inline-block; width:10px; height:10px; margin-right:5px; vertical-align:-1px; }
+    .legend .red { background:var(--accent); } .legend .green { background:#355d59; }
+    .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(23,23,23,.55); align-items:center; justify-content:center; padding:20px; }
+    .modal-backdrop.show { display:flex; }
+    .modal { width:min(470px, 100%); background:var(--paper); border:1px solid var(--ink); padding:36px; text-align:center; box-shadow:9px 9px 0 rgba(0,0,0,.15); }
+    .modal h3 { font-size:42px; margin:0 0 10px; letter-spacing:-.05em; }
+    .modal p { margin:0 0 25px; color:var(--muted); }
+    .final-score { color:var(--accent); font-size:56px; display:block; line-height:1; margin:4px 0 25px; }
+    @media (max-width:760px) { .masthead { width:calc(100% - 24px); } main { width:calc(100% - 24px); } .game-head { align-items:center; } .game-layout { flex-direction:column; align-items:center; } .controls { width:min(450px, 100%); } .date { display:none; } }
+  </style>
+</head>
+<body>
+  <header class="masthead"><div class="paper-name">The Bostonian Times</div><div><span class="date">The daily puzzle</span> <button class="top-link" id="archiveBtn">Archive</button></div></header>
+  <main>
+    <section id="home" class="screen active">
+      <div class="home-card">
+        <div class="kicker">A word puzzle by the Bostonian Times</div>
+        <h1>Word<br>Links</h1>
+        <p class="dek">Connect the two colored words with as few words as possible. Start anywhere, matching every letter you overlap.</p>
+        <button class="primary" id="playBtn">Play today’s puzzle</button>
+      </div>
+    </section>
+
+    <section id="game" class="screen">
+      <div class="game-head">
+        <div><h2>Word Links</h2><p class="instructions">Click any square to start a word. Match every letter your word overlaps.</p></div>
+        <div class="scorebox"><span class="score-label">Your score</span><span class="score" id="score">0</span></div>
+      </div>
+      <div class="game-layout">
+        <div class="board-wrap"><div id="board" class="board" aria-label="15 by 15 Word Links board"></div><div class="legend"><span class="red"></span>first word &nbsp; <span class="green"></span>second word</div></div>
+        <aside class="controls">
+          <h3 class="control-title">Make a link</h3>
+          <label for="word">New word</label><input id="word" type="text" maxlength="15" autocomplete="off" placeholder="e.g. LETTER">
+          <label for="direction">Direction</label><select id="direction"><option value="across">Across →</option><option value="down">Down ↓</option></select>
+          <button class="primary place" id="placeBtn">Place word · 10 + letters</button>
+          <div id="status" class="status">Click any square to choose where your word starts.</div>
+          <div class="legend">Connect the two colored words. Each word costs 10 points plus one point per letter.</div>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <div class="modal-backdrop" id="modalBackdrop"><div class="modal"><div class="kicker">Puzzle complete</div><h3>Well done.</h3><p>You connected both starting words.</p><span class="final-score" id="finalScore">0</span><p>points</p><button class="primary" id="archiveCloseBtn">View archive</button></div></div>
+  <div class="archive-panel" id="archivePanel"><h4>Daily archive</h4><div class="archive-row"><input id="archiveDate" type="date" aria-label="Choose a puzzle date"><button id="openDate">Open</button></div><div id="archiveStatus" class="archive-status"></div><div id="weekDays" class="week-days" aria-label="Puzzle week"></div></div>
+
+  <script>
+    const SIZE = 15;
+    const WORDS = new Set('ABOUT,ACROSS,ADDED,AFTER,AGAIN,ALMOST,ALONE,ALONG,APPLE,AROUND,ATLAS,AVOID,BEACH,BEAM,BEAR,BEFORE,BEGIN,BELOW,BOARD,BOOK,BRIDGE,BRIGHT,BRING,BROWN,BUILD,CARRY,CHART,CHECK,CIRCLE,CLEAR,CLOSE,CLOUD,COLOR,COUNT,CROSS,DAILY,DREAM,EARTH,EASY,ENTER,EVERY,EXTRA,FIELD,FIND,FIRST,FLASH,FLOWER,FOCUS,FORWARD,FRAME,FRONT,GAME,GARDEN,GLASS,GOLDEN,GRACE,GRID,GROUP,GROW,GREEN,HAPPY,HEART,HOME,HOUSE,IDEA,IMAGE,INDEX,INSIDE,LEARN,LETTER,LEVEL,LIGHT,LINK,LOCAL,LOGIC,LOWER,MATCH,MONEY,MORNING,MOUSE,MUSIC,NAMES,NEWS,NEEDS,NESTS,NIGHT,NODES,NOSES,NOTES,NUMBER,OCEAN,OPEN,ORANGE,OTHER,PAPER,PLACE,PLAIN,PLANT,POINT,POWER,PRESS,PUZZLE,QUICK,QUIET,RAINY,READY,READ,RIGHT,RISKY,RIVER,ROCKY,ROUND,ROUTE,ROWdy,RUGBY,SCORE,SECOND,SHAPE,SHARE,SHORT,SIDES,SILLS,SIMPLE,SOLVE,SPACE,START,STARS,STOPS,STORY,SUNDAY,SUPER,SYSTEM,TABLE,TAKE,THINK,THREE,TIMES,TODAY,TOGETHER,TRACK,TRAIN,TRUST,UNDER,UPPER,VALUE,VOICE,WATER,WEATHER,WEEK,WORD,WORDS,WORK,WORLD,WRITE,YELLOW,YOUNG'.replace('ROWdy','ROWDY').split(','));
+    const puzzleTemplates = [
+      { a:{word:'BOSTON',row:7,col:2,dir:'across'}, b:{word:'TIMES',row:3,col:10,dir:'down'}, bridge:'NEWS' },
+      { a:{word:'GARDEN',row:7,col:2,dir:'across'}, b:{word:'WORDS',row:3,col:10,dir:'down'}, bridge:'NAMES' },
+      { a:{word:'GOLDEN',row:7,col:2,dir:'across'}, b:{word:'GLASS',row:3,col:10,dir:'down'}, bridge:'NOTES' },
+      { a:{word:'BUTTON',row:7,col:2,dir:'across'}, b:{word:'SIDES',row:3,col:10,dir:'down'}, bridge:'NEEDS' },
+      { a:{word:'COTTON',row:7,col:2,dir:'across'}, b:{word:'PLANS',row:3,col:10,dir:'down'}, bridge:'NODES' },
+      { a:{word:'PERSON',row:7,col:2,dir:'across'}, b:{word:'LINES',row:3,col:10,dir:'down'}, bridge:'NOSES' },
+      { a:{word:'WAGON',row:7,col:2,dir:'across'}, b:{word:'STARS',row:3,col:10,dir:'down'}, bridge:'NESTS' },
+      { a:{word:'PAPER',row:7,col:2,dir:'across'}, b:{word:'DAILY',row:3,col:10,dir:'down'}, bridge:'RUGBY' },
+      { a:{word:'COLOR',row:7,col:2,dir:'across'}, b:{word:'HAPPY',row:3,col:10,dir:'down'}, bridge:'READY' },
+      { a:{word:'RIVER',row:7,col:2,dir:'across'}, b:{word:'SUNNY',row:3,col:10,dir:'down'}, bridge:'RAINY' },
+      { a:{word:'LOWER',row:7,col:2,dir:'across'}, b:{word:'IVORY',row:3,col:10,dir:'down'}, bridge:'ROWDY' },
+      { a:{word:'POWER',row:7,col:2,dir:'across'}, b:{word:'ENTRY',row:3,col:10,dir:'down'}, bridge:'ROCKY' },
+      { a:{word:'NEVER',row:7,col:2,dir:'across'}, b:{word:'EVERY',row:3,col:10,dir:'down'}, bridge:'RISKY' },
+      { a:{word:'TIGER',row:7,col:2,dir:'across'}, b:{word:'JELLY',row:3,col:10,dir:'down'}, bridge:'RALLY' }
+    ];
+    const puzzleOrder=[5,11,2,9,0,12,7,13,4,10,1,8,6,3];
+    const dayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    let puzzle, cells, words, selected = null, score = 0, currentDate = todayISO();
+    const $ = id => document.getElementById(id);
+    function todayISO() { const d=new Date(); return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`; }
+    function dateFromISO(iso) { return new Date(`${iso}T12:00:00Z`); }
+    function dateLabel(iso) { return dateFromISO(iso).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'}); }
+    function difficultyFor(iso) { return dateFromISO(iso).getUTCDay()+1; }
+    function hashDate(iso) { let h=2166136261; for (const ch of iso) { h^=ch.charCodeAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+    function completedDays() { try { return JSON.parse(localStorage.getItem('wordlinks-complete-v1')||'[]'); } catch(e) { return []; } }
+    function markComplete(iso) { const done=new Set(completedDays()); done.add(iso); localStorage.setItem('wordlinks-complete-v1',JSON.stringify([...done].sort())); }
+    function setScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); $(id).classList.add('active'); }
+    function setStatus(message, type='') { $('status').textContent = message; $('status').className = 'status' + (type ? ' '+type : ''); }
+    function fail(message) { $('word').classList.remove('success'); $('word').classList.add('error'); setStatus(message, 'error'); }
+    function makeGrid() { cells = Array.from({length:SIZE}, () => Array.from({length:SIZE}, () => ({letter:'', ids:[]}))); }
+    function putWord(item, id, kind) { for (let i=0;i<item.word.length;i++) { const r=item.row+(item.dir==='down'?i:0), c=item.col+(item.dir==='across'?i:0); cells[r][c].letter=item.word[i]; cells[r][c].ids.push(id); cells[r][c].kind=kind; } words.push({...item,id}); }
+    function puzzleForDate(iso) { const difficulty=difficultyFor(iso); const epoch=dateFromISO('2026-01-04'); const dayIndex=Math.floor((dateFromISO(iso)-epoch)/86400000); const template=puzzleTemplates[puzzleOrder[((dayIndex%puzzleOrder.length)+puzzleOrder.length)%puzzleOrder.length]]; return {...template, requiredLinks:difficulty}; }
+    function updateDailyUI() { $('archiveDate').value=currentDate; $('archiveDate').max=todayISO(); $('archiveStatus').textContent=completedDays().includes(currentDate)?'Completed':'Not completed'; renderArchive(); }
+    function initGame(date=currentDate) {
+      currentDate=date; puzzle=puzzleForDate(currentDate); makeGrid(); words=[]; score=0; selected=null; $('score').textContent='0'; $('word').value=''; $('word').className=''; $('board').classList.remove('complete'); $('modalBackdrop').classList.remove('show');
+      putWord(puzzle.a,'start-a','start-a'); putWord(puzzle.b,'start-b','start-b'); updateDailyUI(); drawBoard(); setStatus(`Click any square to choose where your word starts. ${puzzle.requiredLinks} link${puzzle.requiredLinks===1?'':'s'} needed today.`);
+    }
+    function drawBoard() { const board=$('board'); board.innerHTML=''; for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) { const cell=document.createElement('button'); const data=cells[r][c]; cell.className='cell' + (data.letter?' filled':'') + (data.kind?' '+data.kind:'') + (selected&&selected.r===r&&selected.c===c?' selected':''); cell.textContent=data.letter; cell.setAttribute('aria-label',data.letter ? `${data.letter}, row ${r+1}, column ${c+1}` : `empty, row ${r+1}, column ${c+1}`); cell.addEventListener('click',()=>selectCell(r,c)); board.appendChild(cell); } }
+    function selectCell(r,c) { selected={r,c}; drawBoard(); setStatus(`Start position selected: row ${r+1}, column ${c+1}.`); }
+    function tryPlace() {
+      const raw=$('word').value.trim().toUpperCase().replace(/[^A-Z]/g,''); const dir=$('direction').value;
+      if (raw.length<2) return fail('Enter a word with at least two letters.', raw);
+      if (!WORDS.has(raw)) return fail('That word is not in the dictionary.', raw);
+      if (!selected) return fail('Click any square on the board to choose where the word starts.', raw);
+      const row=selected.r, col=selected.c;
+      if (row+(dir==='down'?raw.length-1:0)>=SIZE || col+(dir==='across'?raw.length-1:0)>=SIZE) return fail('That word would run off the board.', raw);
+      let overlaps=0;
+      for (let i=0;i<raw.length;i++) { const r=row+(dir==='down'?i:0), c=col+(dir==='across'?i:0), existing=cells[r][c].letter; if (existing) { overlaps++; if (existing!==raw[i]) return fail('Every crossing letter must match.', raw); } }
+      if (overlaps<1) return fail('Your word must overlap at least one existing letter.', raw);
+      const id='word-'+words.length; putWord({word:raw,row,col,dir},id,'added'); score += 10+raw.length; $('score').textContent=score; $('word').value=''; $('word').className='success'; selected=null; drawBoard();
+      const addedCount=words.filter(w=>w.id.startsWith('word-')).length; if (isConnected() && addedCount>=puzzle.requiredLinks) finish(); else setStatus(`“${raw}” placed. +${10+raw.length} points.`, 'success');
+    }
+    function isConnected() { const graph=new Map(words.map(w=>[w.id,new Set()])); for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) { const ids=cells[r][c].ids; for (let i=0;i<ids.length;i++) for (let j=i+1;j<ids.length;j++) { graph.get(ids[i]).add(ids[j]); graph.get(ids[j]).add(ids[i]); } } const seen=new Set(['start-a']), queue=['start-a']; while(queue.length){ const id=queue.shift(); for(const next of graph.get(id)||[]) if(!seen.has(next)){seen.add(next);queue.push(next);} } return seen.has('start-b'); }
+    function finish() { $('board').classList.add('complete'); markComplete(currentDate); updateDailyUI(); $('finalScore').textContent=score; setTimeout(()=>$('modalBackdrop').classList.add('show'),220); }
+    function renderArchive() { const wrap=$('weekDays'); wrap.innerHTML=''; const d=dateFromISO(currentDate); d.setUTCDate(d.getUTCDate()-d.getUTCDay()); const done=new Set(completedDays()); for(let i=0;i<7;i++){ const day=new Date(d); day.setUTCDate(d.getUTCDate()+i); const key=`${day.getUTCFullYear()}-${String(day.getUTCMonth()+1).padStart(2,'0')}-${String(day.getUTCDate()).padStart(2,'0')}`; const b=document.createElement('button'); b.className='day-button'+(key===currentDate?' current ':'')+(done.has(key)?' done':''); b.textContent=dayNames[i].slice(0,2); b.innerHTML+=`<small>${day.getUTCDate()}</small>`; b.disabled=key>todayISO(); b.addEventListener('click',()=>{if(!b.disabled){initGame(key);setScreen('game');}}); wrap.appendChild(b); } }
+    $('playBtn').addEventListener('click',()=>{currentDate=todayISO();setScreen('game');initGame(currentDate);}); $('placeBtn').addEventListener('click',tryPlace); $('word').addEventListener('keydown',e=>{if(e.key==='Enter')tryPlace();}); $('archiveBtn').addEventListener('click',()=>{$('archivePanel').classList.toggle('show');updateDailyUI();}); $('openDate').addEventListener('click',()=>{const date=$('archiveDate').value;if(!date||date>todayISO())return;initGame(date);setScreen('game');$('archivePanel').classList.remove('show');}); $('archiveCloseBtn').addEventListener('click',()=>{$('modalBackdrop').classList.remove('show');$('archivePanel').classList.add('show');updateDailyUI();$('archiveDate').focus();});
+  </script>
+</body>
+</html>
