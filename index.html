@@ -116,9 +116,9 @@
   <div class="modal-backdrop" id="modalBackdrop"><div class="modal"><div class="kicker">Puzzle complete</div><h3>Well done.</h3><p>You connected both starting words.</p><span class="final-score" id="finalScore">0</span><p>points</p><button class="primary" id="archiveCloseBtn">View archive</button></div></div>
   <div class="archive-panel" id="archivePanel"><h4>Daily archive</h4><div class="archive-row"><input id="archiveDate" type="date" aria-label="Choose a puzzle date"><button id="openDate">Open</button></div><div id="archiveStatus" class="archive-status"></div><div id="weekDays" class="week-days" aria-label="Puzzle week"></div></div>
 
+  <script src="words.js"></script>
   <script>
     const SIZE = 15;
-    const WORDS = new Set('ABOUT,ACROSS,ADDED,AFTER,AGAIN,ALMOST,ALONE,ALONG,APPLE,AROUND,ATLAS,AVOID,BEACH,BEAM,BEAR,BEFORE,BEGIN,BELOW,BOARD,BOOK,BRIDGE,BRIGHT,BRING,BROWN,BUILD,CARRY,CHART,CHECK,CIRCLE,CLEAR,CLOSE,CLOUD,COLOR,COUNT,CROSS,DAILY,DREAM,EARTH,EASY,ENTER,EVERY,EXTRA,FIELD,FIND,FIRST,FLASH,FLOWER,FOCUS,FORWARD,FRAME,FRONT,GAME,GARDEN,GLASS,GOLDEN,GRACE,GRID,GROUP,GROW,GREEN,HAPPY,HEART,HOME,HOUSE,IDEA,IMAGE,INDEX,INSIDE,LEARN,LETTER,LEVEL,LIGHT,LINK,LOCAL,LOGIC,LOWER,MATCH,MONEY,MORNING,MOUSE,MUSIC,NAMES,NEWS,NEEDS,NESTS,NIGHT,NODES,NOSES,NOTES,NUMBER,OCEAN,OPEN,ORANGE,OTHER,PAPER,PLACE,PLAIN,PLANT,POINT,POWER,PRESS,PUZZLE,QUICK,QUIET,RAINY,READY,READ,RIGHT,RISKY,RIVER,ROCKY,ROUND,ROUTE,ROWdy,RUGBY,SCORE,SECOND,SHAPE,SHARE,SHORT,SIDES,SILLS,SIMPLE,SOLVE,SPACE,START,STARS,STOPS,STORY,SUNDAY,SUPER,SYSTEM,TABLE,TAKE,THINK,THREE,TIMES,TODAY,TOGETHER,TRACK,TRAIN,TRUST,UNDER,UPPER,VALUE,VOICE,WATER,WEATHER,WEEK,WORD,WORDS,WORK,WORLD,WRITE,YELLOW,YOUNG'.replace('ROWdy','ROWDY').split(','));
     const puzzleTemplates = [
       { a:{word:'BOSTON',row:7,col:2,dir:'across'}, b:{word:'TIMES',row:3,col:10,dir:'down'}, bridge:'NEWS' },
       { a:{word:'GARDEN',row:7,col:2,dir:'across'}, b:{word:'WORDS',row:3,col:10,dir:'down'}, bridge:'NAMES' },
@@ -162,7 +162,7 @@
     function tryPlace() {
       const raw=$('word').value.trim().toUpperCase().replace(/[^A-Z]/g,''); const dir=$('direction').value;
       if (raw.length<2) return fail('Enter a word with at least two letters.', raw);
-      if (!WORDS.has(raw)) return fail('That word is not in the dictionary.', raw);
+      if (!WORDS.has(raw.toLowerCase())) return fail('That word is not in the dictionary.', raw);
       if (!selected) return fail('Click any square on the board to choose where the word starts.', raw);
       const row=selected.r, col=selected.c;
       if (row+(dir==='down'?raw.length-1:0)>=SIZE || col+(dir==='across'?raw.length-1:0)>=SIZE) return fail('That word would run off the board.', raw);
